@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <!-- headタグの中にはメタデータ等を記載する -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+
+<body>
+    <!-- bodyタグの中には実際に表示するものなどを書く -->
+    <div class="text">
+        <h2 id="titles">しりとり</h2>
+        <p id="previousWord"></p>
+        <div class="textbox" id="inputArea">
+            <input id="nextWordInput" required="" type="text" /><label for="text">次の単語</label>
+        </div>
+        <span id="nextWordSendButton" class="btn">送信</span>
+        <span id="ResetButton" class="btn">リセット</span>
+    </div>
+
+    <div class="text">
+        <details>
+            <summary>単語履歴</summary>
+            <p id="wordHistories"></p>
+        </details>
+    </div>
+    <!-- JavaScriptを実行 -->
+    <script>
+        async function updateWordHistories() {
+            const response = await fetch("/wordHistories", { method: "GET" });
+            const wordHistories = await response.json();
+            const historyArea = document.querySelector("#wordHistories");
+
+            historyArea.replaceChildren();
+            [...wordHistories].reverse().forEach((word, index) => {
+                if (index > 0) {
+                    historyArea.appendChild(document.createElement("br"));
+                }
+                historyArea.appendChild(document.createTextNode(word));
+            });
+        }
+
+        function gameover() {
+            document.querySelector(".textbox").innerHTML == "<h2>GAME OVER</h2>";
+        }
+        window.onload = async (event) => {
+            // GET /shiritoriを実行
+            const response = await fetch("/shiritori", { method: "GET" });
+            // responseの中からレスポンスのテキストデータを取得
+            const previousWord = await response.text();
+            // id: previousWordのタグを取得
+            const paragraph = document.querySelector("#previousWord");
+            // 取得したタグの中身を書き換える
+            paragraph.innerHTML = `前の単語: ${previousWord}`;
+            await updateWordHistories();
+        }
+
+        document.querySelector("#nextWordSendButton").onclick = async (event) => {
+            // inputタグを取得
+            const nextWordInput = document.querySelector("#nextWordInput");
+            // inputの中身を取得
+            const nextWordInputText = nextWordInput.value;
+            // POST /shiritoriを実行
+            // 次の単語をresponseに格納
+            const response = await fetch(
+                "/shiritori",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nextWord: nextWordInputText })
+                }
+            );
+
+            // status: 200以外が返ってきた場合にエラーを表示
+            if (response.status !== 200) {
+                const errorJson = await response.text();
+                const errorObj = JSON.parse(errorJson);
+                alert(errorObj["errorMessage"]);
+                if (errorObj["errorCode"] == 20001 || errorObj["errorCode"] == 20002) {
+                    alert("GAME OVER");
+                    document.querySelector("#inputArea").style = "display: none;";
+                    document.querySelector("#nextWordSendButton").style = "display: none;";
+                    document.querySelector("#titles").innerHTML = "GAME OVER";
+                }
+                nextWordInput.value = "";
+                return;
+            }
+
+
+            const previousWord = await response.text();
+
+            // id: previousWordのタグを取得
+            const paragraph = document.querySelector("#previousWord");
+            // 取得したタグの中身を書き換える
+            paragraph.innerHTML = `前の単語: ${previousWord}`;
+            // inputタグの中身を消去する
+            nextWordInput.value = "";
+
+            // 履歴
+            await updateWordHistories();
+        }
+
+        document.querySelector("#ResetButton").onclick = async (event) => {
+            const response = await fetch("/wordHistories", { method: "DELETE" });
+            const initialWord = await response.text();
+
+            document.querySelector("#previousWord").innerHTML = `前の単語: ${initialWord}`;
+            await updateWordHistories();
+            document.querySelector("#nextWordInput").value = "";
+            document.querySelector("#inputArea").style = "";
+            document.querySelector("#nextWordSendButton").style = "";
+            document.querySelector("#titles").innerHTML = "しりとり";
+        }
+
+        document.querySelector("#nextWordInput").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.querySelector("#nextWordSendButton").click();
+            }
+        });
+    </script>
+</body>
+
+</html>

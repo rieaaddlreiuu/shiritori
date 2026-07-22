@@ -1,0 +1,81 @@
+/* public/styles.css */
+
+body {
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+input {
+  outline: 0;
+  border: 0;
+  display: block;
+}
+
+.text {
+  padding: 20px 8px 4px 8px;
+  width: 264px;
+}
+
+.text + .text {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.textbox {
+  display: block;
+  max-height: 48px;
+  padding: 20px 8px 4px 8px;
+  width: 264px;
+  height: 48px;
+  position: relative;
+}
+.textbox input[type="text"] {
+  width: 256px;
+  padding: 8px 4px 6px 4px;
+  font-size: 1.2em;
+  background: rgba(0, 0, 0, 0);
+  color: rgba(0, 0, 0, 0.67);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+.textbox input[type="text"]:disabled {
+  border-bottom: 2px dotted rgba(0, 0, 0, 0.4);
+}
+.textbox input[type="text"]:disabled ~ label {
+  color: rgba(0, 0, 0, 0.4);
+}
+.textbox input[type="text"] ~ label {
+  font-size: 1.2em;
+  color: rgba(0, 0, 0, 0.67);
+  display: block;
+  position: absolute;
+  top: 24px;
+  left: 12px;
+  pointer-events: none;
+  margin-right: 12px;
+  transition: all 0.2s;
+}
+.textbox input[type="text"]:not([value=""]) ~ label {
+  font-size: 0.8em;
+  top: 8px;
+}
+.textbox input[type="text"]:focus ~ label {
+  font-size: 0.8em;
+  top: 8px;
+}
+
+.btn {
+  display: inline-block;
+  color: #fff;
+  text-decoration: none;
+  background-color: #bae1fb;
+  border-radius: 0em;
+  padding: 0.5em 1em;
+  transition: 0.5s;
+}
+
+.btn:hover {
+  background: #83ceff;
+}
