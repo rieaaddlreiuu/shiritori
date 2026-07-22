@@ -4,26 +4,10 @@ import { serveDir } from "jsr:@std/http/file-server";
 const wordHistories = ["しりとり"];
 let index = 0;
 
-function toHiragana(text) {
-    return text.normalize("NFC").replace(/[\u30a1-\u30f6]/g, (char) =>
-        String.fromCharCode(char.charCodeAt(0) - 0x60)
-    );
-}
-
-const dictionaryWords = new Set();
-
-async function addDictionaryWords(path) {
-    const dictionary = JSON.parse(await Deno.readTextFile(path));
-
-    for (const entry of dictionary.words) {
-        for (const kana of entry.kana) {
-            dictionaryWords.add(toHiragana(kana.text));
-        }
-    }
-}
-
-await addDictionaryWords("./dictionary/jmdict-all-3.6.2.json");
-await addDictionaryWords("./dictionary/jmnedict-all-3.6.2.json");
+const dictionaryText = await Deno.readTextFile(
+    new URL("./dictionary/words.txt", import.meta.url),
+);
+const dictionaryWords = new Set(dictionaryText.split("\n").filter(Boolean));
 
 function wordExists(word) {
     if (typeof word !== "string" || !/^[\u3041-\u3096ー]+$/u.test(word)) {

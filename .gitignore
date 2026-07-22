@@ -1,3 +1,4 @@
 /.vscode
 /analysis.json
-/dictionary
+/dictionary/*
+!/dictionary/words.txt

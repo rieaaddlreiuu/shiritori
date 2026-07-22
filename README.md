@@ -20,8 +20,8 @@ Deno で作成した、ブラウザ上で遊べる日本語のしりとりゲー
 
 ### 単語の実在チェック
 
-- JMdict（一般語）と JMnedict（固有名詞）の JSON データをサーバー起動時に読み込みます。
-- 各辞書の `kana[].text` を取得し、約61万語の検索用 `Set` を作成します。
+- JMdict（一般語）と JMnedict（固有名詞）の `kana[].text` から、約59万語の読みだけを `dictionary/words.txt` へ事前に抽出しています。
+- サーバー起動時は巨大な元JSONを解析せず、約11.6MBの `words.txt` から検索用 `Set` を作成します。
 - 辞書にカタカナで登録された読みも、ひらがなに変換してから登録します。そのため、例えば辞書上の「ラーメン」を「らーめん」と入力できます。
 - 検索に `Set.has()` を使うことで、入力のたびに辞書全体を走査しない構成にしています。
 - 辞書に存在しない単語には、エラーコード `10002` とメッセージを JSON で返します。
@@ -54,8 +54,7 @@ Deno で作成した、ブラウザ上で遊べる日本語のしりとりゲー
 ### 必要なもの
 
 - Deno
-- `dictionary/jmdict-all-3.6.2.json`
-- `dictionary/jmnedict-all-3.6.2.json`
+- `dictionary/words.txt`
 
 ### 起動
 
@@ -63,7 +62,17 @@ Deno で作成した、ブラウザ上で遊べる日本語のしりとりゲー
 deno run --allow-net --allow-read server.js
 ```
 
-起動後、[http://localhost:8000](http://localhost:8000) をブラウザで開きます。辞書ファイルの合計サイズが大きいため、起動時の読み込みに数秒かかる場合があります。
+起動後、[http://localhost:8000](http://localhost:8000) をブラウザで開きます。
+
+### 軽量辞書の再生成
+
+元の JMdict/JMnedict JSON を更新した場合は、次のコマンドで `words.txt` を再生成します。
+
+```sh
+deno run --allow-read --allow-write=./dictionary/words.txt build_dictionary.js
+```
+
+元JSONはGitとDeployの対象外です。`words.txt` だけがDeploy先に含まれます。
 
 ## 参考にしたWebサイト
 
@@ -79,9 +88,14 @@ deno run --allow-net --allow-read server.js
 OpenAI の Codex を以下の用途で使用しました。
 
 - **実在チェック機能の実装**
-  - JMdict と JMnedict の JSON 構造を確認し、すべての読みを検索用 `Set` に登録する処理の実装に使用しました。
+  - JMdict と JMnedict の JSON 構造を確認し、必要な読みだけを軽量辞書へ抽出して検索用 `Set` に登録する処理の実装に使用しました。
   - カタカナで登録された辞書の読みを、入力形式に合わせてひらがなへ正規化する処理の実装に使用しました。
   - 未登録語を検出し、HTTP 400 と JSON 形式のエラーを返す処理の実装に使用しました。
+- **Deno Deploy向けの辞書軽量化**
+  - Deploy失敗の原因調査にAIを使用し、元の辞書ファイルが `.gitignore` の対象であることと、巨大なJSONの読み込みがDeploy先のメモリを大きく消費する問題を確認しました。
+  - 合計約427MBの JMdict/JMnedict から、ひらがなの読み593,774語だけを抽出する `build_dictionary.js` の実装にAIを使用しました。
+  - 生成した約11.6MBの `dictionary/words.txt` だけをDeploy対象とし、元JSONをDeploy対象外に保つ `.gitignore` の設定にAIを使用しました。
+  - サーバー起動時に元JSONを解析する方式から、軽量辞書を直接 `Set` へ読み込む方式への変更にAIを使用しました。
 - **全般的なデバッグ**
   - 小書き文字で終わる単語の比較範囲の誤りを調査し、「しやくしょ → しょくいん」が正しく判定されるよう修正するために使用しました。
   - 長音記号の判定、母音取得処理、入力エラー処理の確認と修正に使用しました。
